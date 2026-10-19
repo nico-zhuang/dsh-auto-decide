@@ -62,14 +62,14 @@ export async function autoAnswer(request, next, settings, options = {}) {
     }
     // The context is plugin-authored; it must never masquerade as human consent.
     const note = {
-      origin: 'auto-decide', humanConfirmed: false,
+      origin: 'dsh-auto-decide', humanConfirmed: false,
       mode: current.mode, outcome: batch.answers.every(answer => answer.selected.length === 0) ? 'skipped' : 'selected',
       questions: request.questions.map(q => ({ id: q.id, question: q.question, options: q.options ?? [] })),
       answers: batch.answers,
       notice: '自动处理而非用户本人确认；跳过不是同意。不能据此授权发布、部署、删除、付款或权限变更。',
     };
     try {
-      agent.inject({ source: { kind: 'auto-decide' }, content: [{ type: 'text', text: JSON.stringify(note) }] });
+      agent.inject({ source: { kind: 'dsh-auto-decide' }, content: [{ type: 'text', text: JSON.stringify(note) }] });
     } catch (error) {
       try { onError(error); } catch { /* telemetry must not replace the original failure */ }
       const settled = await human;

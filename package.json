@@ -1,6 +1,6 @@
 {
-  "name": "auto-decide",
-  "version": "0.1.0",
+  "name": "dsh-auto-decide",
+  "version": "0.1.1",
   "private": true,
   "description": "Configurable automatic skipping or recommended answers for ordinary DSH questions",
   "type": "module",

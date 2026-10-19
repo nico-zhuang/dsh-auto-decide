@@ -1,6 +1,6 @@
-# auto-decide
+# dsh-auto-decide
 
-DSH 0.2.1-rc.2 的普通 `ask_user_question` 超时处理插件：默认启用、120 秒后跳过；可在「插件 → 已安装插件 → auto-decide → 组件配置」修改为 1–3600 秒（例如 5 秒），或切换为唯一推荐项模式。配置由 DSH Config Forms 持久化。
+DSH 0.2.1-rc.2 的普通 `ask_user_question` 超时处理插件：默认启用、120 秒后跳过；可在「插件 → 已安装插件 → dsh-auto-decide → 组件配置」修改为 1–3600 秒（例如 5 秒），或切换为唯一推荐项模式。配置由 DSH Config Forms 持久化。
 
 ## 处理范围与安全边界
 
@@ -23,4 +23,4 @@ npm test
 npm run check
 ```
 
-回滚请使用 DSH 插件管理器先停用或卸载 `auto-decide`，不手工修改 profile 清单、Cordis patch 或应用包。
+回滚请使用 DSH 插件管理器先停用或卸载 `dsh-auto-decide`，不手工修改 profile 清单、Cordis patch 或应用包。

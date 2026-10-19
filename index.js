@@ -1,7 +1,7 @@
 import z from '@deepseek-ai/schemastery';
 import { registerQuestionTimeout } from './runtime.js';
 
-export const name = 'auto-decide';
+export const name = 'dsh-auto-decide';
 export const inject = ['tools', 'userQuestions'];
 export const Config = z.object({
   enabled: z.boolean().default(true).volatile().description('启用普通提问超时处理；不处理计划审阅和安全审批'),
@@ -10,5 +10,5 @@ export const Config = z.object({
 });
 
 export function apply(ctx, config) {
-  ctx.effect(() => registerQuestionTimeout(ctx, config), 'auto-decide: automation');
+  ctx.effect(() => registerQuestionTimeout(ctx, config), 'dsh-auto-decide: automation');
 }

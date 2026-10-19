@@ -1,6 +1,6 @@
 - insert:
-    - id: auto-decide
-      name: auto-decide
+    - id: dsh-auto-decide
+      name: dsh-auto-decide
       config:
         enabled: true
         timeoutSeconds: 120

@@ -9,7 +9,7 @@ test('browser bundle declares its slot and mounts a settings panel without a sec
   let moduleFactory;
   const script = readFileSync(new URL('../client.js', import.meta.url), 'utf8');
   vm.runInNewContext(script, { window: { __ModuleLoader__: { load(value) { moduleFactory = value; } } } });
-  assert.equal(moduleFactory.id, 'auto-decide');
+  assert.equal(moduleFactory.id, 'dsh-auto-decide');
   const React = {
     createElement: (tag, props, ...children) => ({ tag, props, children }),
     useSyncExternalStore: (subscribe, getSnapshot) => getSnapshot(),
@@ -21,11 +21,11 @@ test('browser bundle declares its slot and mounts a settings panel without a sec
   assert.deepEqual(Array.from(client.inject), ['slots', 'configForms']);
   const form = { getSnapshot: () => ({ status: 'ready', writable: true, value: { enabled: true, mode: 'skip', timeoutSeconds: 120 } }),
     subscribe() { return () => {}; }, set: async () => true };
-  const ctx = { configForms: { get: name => { assert.equal(name, 'auto-decide'); return form; }, whileServed: (names, cb) => cb() },
+  const ctx = { configForms: { get: name => { assert.equal(name, 'dsh-auto-decide'); return form; }, whileServed: (names, cb) => cb() },
     slots: { inject(name, cb) { assert.equal(name, 'plugins.row.config'); cb(); }, register(details, component) { registration = details; panel = component; } },
     effect(cb) { cb(); } };
   client.apply(ctx);
-  assert.equal(registration.key, 'auto-decide#auto-decide');
+  assert.equal(registration.key, 'dsh-auto-decide#dsh-auto-decide');
   const element = panel({ view: 'page' });
   assert.equal(element.tag, 'section');
 });

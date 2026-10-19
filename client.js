@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'auto-decide',
+  id: 'dsh-auto-decide',
   factory(require) {
     const React = require('react');
     const h = React.createElement;
@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'configForms'],
       apply(ctx) {
-        const form = ctx.configForms.get('auto-decide');
+        const form = ctx.configForms.get('dsh-auto-decide');
         function QuestionTimeoutSettings({ view }) {
           const snapshot = React.useSyncExternalStore(
             React.useCallback(listener => form.subscribe(listener), []),
@@ -31,8 +31,8 @@ window.__ModuleLoader__.load({
           const writable = snapshot.status === 'ready' && snapshot.writable && !busy;
           const interval = Number(seconds);
           if (view === 'summary') return h('span', null, `普通提问 · ${values.timeoutSeconds ?? 120} 秒 · ${values.mode === 'recommended' ? '推荐项' : '跳过'}`);
-          return h('section', { style: palette.box, 'aria-label': 'auto-decide 提问自动处理' },
-            h('h2', { style: { margin: 0, fontSize: 18 } }, 'auto-decide · 提问自动处理'),
+          return h('section', { style: palette.box, 'aria-label': 'dsh-auto-decide 提问自动处理' },
+            h('h2', { style: { margin: 0, fontSize: 18 } }, 'dsh-auto-decide · 提问自动处理'),
             h('p', { style: palette.muted }, '仅适用于普通 ask_user_question。不会自动处理安全审批或方案审阅；插件给出的答案会在上下文标为自动处理，而不是用户亲自同意。'),
             h('label', { style: palette.row }, h('input', { type: 'checkbox', checked: values.enabled ?? true, disabled: !writable,
               onChange: event => save('enabled', event.target.checked) }), '启用自动处理'),
@@ -49,10 +49,10 @@ window.__ModuleLoader__.load({
             error && h('p', { role: 'alert' }, error),
             snapshot.status !== 'ready' && h('p', { role: 'status' }, `配置状态：${snapshot.status}`));
         }
-        ctx.effect(() => ctx.configForms.whileServed(['auto-decide'], () =>
+        ctx.effect(() => ctx.configForms.whileServed(['dsh-auto-decide'], () =>
           ctx.slots.inject('plugins.row.config', () => ctx.slots.register({
-            name: 'plugins.row.config', key: 'auto-decide#auto-decide',
-          }, QuestionTimeoutSettings))), 'auto-decide: settings');
+            name: 'plugins.row.config', key: 'dsh-auto-decide#dsh-auto-decide',
+          }, QuestionTimeoutSettings))), 'dsh-auto-decide: settings');
       },
     };
   },

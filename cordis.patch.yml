@@ -1,0 +1,7 @@
+- insert:
+    - id: auto-decide
+      name: auto-decide
+      config:
+        enabled: true
+        timeoutSeconds: 120
+        mode: skip

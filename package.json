@@ -1,0 +1,16 @@
+{
+  "name": "auto-decide",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configurable automatic skipping or recommended answers for ordinary DSH questions",
+  "type": "module",
+  "exports": { ".": "./index.js", "./client": "./client.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg" },
+  "files": ["index.js", "runtime.js", "policy.js", "client.js", "cordis.patch.yml", "locale", "icon.svg", "README.md"],
+  "scripts": { "test": "node --test test/*.test.js", "check": "node --check index.js && node --check runtime.js && node --check policy.js && node --check client.js" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "@deepseek-ai/schemastery": "3.18.5" },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "immediately": true, "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager"] }
+  }
+}

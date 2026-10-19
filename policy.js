@@ -13,12 +13,35 @@ export function settingsOf(config) {
   const enabled = config.enabled?.get?.() ?? config.enabled ?? true;
   const mode = config.mode?.get?.() ?? config.mode ?? 'skip';
   const timeoutSeconds = config.timeoutSeconds?.get?.() ?? config.timeoutSeconds ?? 120;
+  const scopeMode = config.scopeMode?.get?.() ?? config.scopeMode ?? 'global';
+  const rawIds = config.sessionIds?.get?.() ?? config.sessionIds ?? [];
   if (typeof enabled !== 'boolean') throw new TypeError('enabled must be boolean');
   if (!['skip', 'recommended'].includes(mode)) throw new TypeError('mode must be skip or recommended');
   if (!Number.isInteger(timeoutSeconds) || timeoutSeconds < 1 || timeoutSeconds > 3600) {
     throw new RangeError('timeoutSeconds must be an integer between 1 and 3600');
   }
-  return { enabled, mode, timeoutSeconds };
+  if (!['global', 'allowlist', 'blocklist'].includes(scopeMode)) throw new TypeError('invalid session scope mode');
+  if (!Array.isArray(rawIds) || rawIds.length > 5000 || rawIds.some(id => typeof id !== 'string' || !id.trim()) || new Set(rawIds).size !== rawIds.length) {
+    throw new TypeError('sessionIds must contain at most 5000 distinct nonempty session IDs');
+  }
+  return { enabled, mode, timeoutSeconds, scopeMode, sessionIds: [...rawIds] };
+}
+
+export function matchesSession(settings, sessionId) {
+  if (settings.scopeMode === 'global') return true;
+  if (typeof sessionId !== 'string' || !sessionId) return false;
+  const listed = settings.sessionIds.includes(sessionId);
+  return settings.scopeMode === 'allowlist' ? listed : !listed;
+}
+
+export function sameSessionScope(left, right) {
+  // Older callers of the exported autoAnswer() may not have scope fields.
+  const leftMode = left.scopeMode ?? 'global';
+  const rightMode = right.scopeMode ?? 'global';
+  const leftIds = left.sessionIds ?? [];
+  const rightIds = right.sessionIds ?? [];
+  return leftMode === rightMode && leftIds.length === rightIds.length
+    && leftIds.every((id, index) => id === rightIds[index]);
 }
 
 export function answerFor(request, mode) {

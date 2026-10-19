@@ -91,6 +91,90 @@ test('changing the saved rule while a question waits avoids stale auto-decisions
   assert.equal(notes.length, 0);
 });
 
+test('editing a session list while a question waits never reuses a stale decision', async () => {
+  const notes = [];
+  const saved = { ...config('recommended'), scopeMode: 'allowlist', sessionIds: ['session-one'] };
+  const a = { ...agent(notes), id: 'session-one' };
+  const req = { questions: [question] };
+  const pending = autoAnswer(req, () => new Promise(resolve => setTimeout(() => resolve({ answers: [{ id: 'q', selected: ['B'] }] }), 1100)),
+    { ...saved, sessionIds: [...saved.sessionIds] }, { config: saved, agent: a });
+  saved.sessionIds = ['session-two'];
+  assert.deepEqual((await pending).answers[0].selected, ['B']);
+  assert.equal(notes.length, 0);
+});
+
+test('the Host hook checks session scope before starting any timer', async () => {
+  const hooks = {};
+  const notes = [];
+  const a = { ...agent(notes), id: 'session-one' };
+  const saved = { ...config('recommended'), scopeMode: 'allowlist', sessionIds: ['session-two'] };
+  const ctx = { on(name, cb) { hooks[name] = cb; return () => { delete hooks[name]; }; },
+    logger: { info() {}, warn() {} } };
+  const dispose = registerQuestionTimeout(ctx, saved);
+  const req = { agent: a, questions: [question] };
+  const human = { answers: [{ id: 'q', selected: ['B'] }] };
+  let wrapped = false;
+  const next = () => { wrapped = Boolean(req.signal); return human; };
+  const invoke = () => hooks['tools/execute']({ name: 'ask_user_question', agent: a },
+    () => hooks['user-questions/request'](req, next));
+  assert.equal(await invoke(), human);
+  assert.equal(wrapped, false);
+  saved.scopeMode = 'blocklist';
+  saved.sessionIds = ['session-one'];
+  assert.equal(await invoke(), human);
+  assert.equal(wrapped, false);
+  saved.sessionIds = [];
+  assert.equal(await invoke(), human);
+  assert.equal(wrapped, true);
+  assert.equal(notes.length, 0);
+  dispose();
+});
+
+test('a whitelisted session alone receives the automatic timeout result', async () => {
+  const hooks = {};
+  const notes = [];
+  const a = { ...agent(notes), id: 'session-allowed' };
+  const saved = { ...config(), scopeMode: 'allowlist', sessionIds: ['session-allowed'] };
+  const ctx = { on(name, cb) { hooks[name] = cb; return () => { delete hooks[name]; }; },
+    logger: { info() {}, warn() {} } };
+  const dispose = registerQuestionTimeout(ctx, saved);
+  const req = { agent: a, questions: [question] };
+  const value = await hooks['tools/execute']({ name: 'ask_user_question', agent: a },
+    () => hooks['user-questions/request'](req, () => new Promise((resolve, reject) => {
+      req.signal.addEventListener('abort', () => reject(req.signal.reason), { once: true });
+    })));
+  assert.deepEqual(value.answers, [{ id: 'q', selected: [] }]);
+  assert.equal(notes.length, 1);
+  assert.equal(JSON.parse(notes[0].content[0].text).humanConfirmed, false);
+  dispose();
+});
+
+test('malformed list config forwards the question to the human UI instead of failing the tool', async () => {
+  const hooks = {};
+  const a = { ...agent([]), id: 'session-one' };
+  const saved = { ...config(), scopeMode: 'global', sessionIds: ['duplicate', 'duplicate'] };
+  const ctx = { on(name, cb) { hooks[name] = cb; return () => { delete hooks[name]; }; },
+    logger: { info() {}, warn() {} } };
+  const dispose = registerQuestionTimeout(ctx, saved);
+  const expected = { answers: [{ id: 'q', selected: ['B'] }] };
+  const result = await hooks['tools/execute']({ name: 'ask_user_question', agent: a },
+    () => hooks['user-questions/request']({ agent: a, questions: [question] }, () => expected));
+  assert.equal(result, expected);
+  dispose();
+});
+
+test('invalidating the scope during a pending question waits for a human result', async () => {
+  const notes = [];
+  const a = { ...agent(notes), id: 'session-one' };
+  const saved = { ...config(), scopeMode: 'allowlist', sessionIds: ['session-one'] };
+  const pending = autoAnswer({ questions: [question] },
+    () => new Promise(resolve => setTimeout(() => resolve({ answers: [{ id: 'q', selected: ['B'] }] }), 1100)),
+    { ...saved, sessionIds: [...saved.sessionIds] }, { config: saved, agent: a });
+  saved.sessionIds = ['duplicate', 'duplicate'];
+  assert.deepEqual((await pending).answers[0].selected, ['B']);
+  assert.equal(notes.length, 0);
+});
+
 test('the Host hook excludes unrelated question services and plan review', async () => {
   const hooks = {};
   const notes = [];

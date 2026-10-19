@@ -7,6 +7,11 @@ test('DSH schema exposes runtime-editable defaults and supports 5/120 seconds', 
   assert.equal(defaults.enabled.get(), true);
   assert.equal(defaults.mode.get(), 'skip');
   assert.equal(defaults.timeoutSeconds.get(), 120);
+  assert.equal(defaults.scopeMode.get(), 'global');
+  assert.deepEqual(defaults.sessionIds.get(), []);
+  const whitelist = Config({ scopeMode: 'allowlist', sessionIds: ['session-one', 'session-two'] });
+  assert.equal(whitelist.scopeMode.get(), 'allowlist');
+  assert.deepEqual(whitelist.sessionIds.get(), ['session-one', 'session-two']);
   const short = Config({ enabled: true, mode: 'recommended', timeoutSeconds: 5 });
   assert.equal(short.mode.get(), 'recommended');
   assert.equal(short.timeoutSeconds.get(), 5);

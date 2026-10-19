@@ -5,3 +5,5 @@
         enabled: true
         timeoutSeconds: 120
         mode: skip
+        scopeMode: global
+        sessionIds: []

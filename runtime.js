@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { answerFor, settingsOf } from './policy.js';
+import { answerFor, matchesSession, sameSessionScope, settingsOf } from './policy.js';
 
 const activeTool = new AsyncLocalStorage();
 
@@ -48,8 +48,15 @@ export async function autoAnswer(request, next, settings, options = {}) {
       return settled.value;
     }
     // Live edits to the settings do not authorize an old pending decision.
-    const current = settingsOf(config);
-    if (!current.enabled || current.mode !== settings.mode || current.timeoutSeconds !== settings.timeoutSeconds) {
+    let current;
+    try { current = settingsOf(config); } catch (error) {
+      try { onError(error); } catch { /* invalid config must not break human questions */ }
+      const settled = await human;
+      if (settled.kind === 'error') throw settled.error;
+      return settled.value;
+    }
+    if (!current.enabled || current.mode !== settings.mode || current.timeoutSeconds !== settings.timeoutSeconds
+      || !sameSessionScope(current, settings) || !matchesSession(current, agent?.id)) {
       const settled = await human;
       if (settled.kind === 'error') throw settled.error;
       return settled.value;
@@ -103,8 +110,12 @@ export function registerQuestionTimeout(ctx, config) {
   stops.push(ctx.on('user-questions/request', (request, next) => {
     const scope = activeTool.getStore();
     if (!scope || !request.agent || scope.agent !== request.agent || request.questions?.some(q => q.intent !== undefined || q.detail !== undefined)) return next();
-    const settings = settingsOf(config);
-    if (!settings.enabled) return next();
+    let settings;
+    try { settings = settingsOf(config); } catch (error) {
+      try { ctx.logger.warn(`[question-timeout] invalid configuration: ${String(error)}`); } catch { /* preserve the human flow */ }
+      return next();
+    }
+    if (!settings.enabled || !matchesSession(settings, request.agent.id)) return next();
     return autoAnswer(request, next, settings, {
       config, agent: request.agent, shutdownSignal: shutdown.signal,
       onAuto: note => ctx.logger.info(`[question-timeout] auto ${note.outcome}; question ids=${note.questions.map(q => q.id).join(',')}`),

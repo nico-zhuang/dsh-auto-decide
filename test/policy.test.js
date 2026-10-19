@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { answerFor, settingsOf } from '../policy.js';
+import { answerFor, settingsOf, matchesSession } from '../policy.js';
 
 const question = (questionText = '选择预览') => ({ id: 'q', question: questionText, options: [
   { label: '保留现状' }, { label: '独立预览 (Recommended)' },
@@ -8,10 +8,25 @@ const question = (questionText = '选择预览') => ({ id: 'q', question: questi
 const request = q => ({ questions: [q] });
 
 test('defaults to skip with configurable whole seconds', () => {
-  assert.deepEqual(settingsOf({}), { enabled: true, mode: 'skip', timeoutSeconds: 120 });
+  assert.deepEqual(settingsOf({}), { enabled: true, mode: 'skip', timeoutSeconds: 120, scopeMode: 'global', sessionIds: [] });
   assert.equal(settingsOf({ timeoutSeconds: { get: () => 5 } }).timeoutSeconds, 5);
   assert.throws(() => settingsOf({ timeoutSeconds: 0 }));
   assert.throws(() => settingsOf({ timeoutSeconds: 2.5 }));
+});
+
+test('session modes target stable IDs and fail closed when ID is missing', () => {
+  const ids = ['session-one', 'session-two'];
+  assert.equal(matchesSession(settingsOf({}), undefined), true);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'allowlist', sessionIds: ids }), 'session-one'), true);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'allowlist', sessionIds: ids }), 'session-three'), false);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'blocklist', sessionIds: ids }), 'session-one'), false);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'blocklist', sessionIds: ids }), 'session-three'), true);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'blocklist' }), 'session-three'), true);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'allowlist', sessionIds: ids }), undefined), false);
+  assert.equal(matchesSession(settingsOf({ scopeMode: 'blocklist', sessionIds: ids }), undefined), false);
+  assert.throws(() => settingsOf({ scopeMode: 'other' }));
+  assert.throws(() => settingsOf({ sessionIds: [12] }));
+  assert.throws(() => settingsOf({ sessionIds: ['session-one', 'session-one'] }));
 });
 
 test('skip always emits empty selections for complete question batches', () => {

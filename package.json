@@ -1,6 +1,6 @@
 {
   "name": "dsh-auto-decide",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Configurable automatic skipping or recommended answers for ordinary DSH questions",
   "type": "module",
@@ -11,6 +11,6 @@
   "dependencies": { "@deepseek-ai/schemastery": "3.18.5" },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "immediately": true, "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager"] }
+    "client": { "platform": "web", "immediately": true, "inject": ["@deepseek-ai/dsh-client-ui-settings", "@deepseek-ai/dsh-client-ui-plugin-manager", "@deepseek-ai/dsh-client-locale"] }
   }
 }

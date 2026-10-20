@@ -30,9 +30,17 @@ test('timeout skips a pending question, records provenance, and cancels the old 
   assert.deepEqual(value, { answers: [{ id: 'q', selected: [] }] });
   assert.equal(forwardedAborted, true);
   assert.equal(notes.length, 1);
+  assert.equal(notes[0].role, 'user', 'injected messages must replay as user/message');
+  assert.match(notes[0].id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    'injected messages need a unique stable id before storage');
   const detail = JSON.parse(notes[0].content[0].text);
   assert.equal(detail.humanConfirmed, false);
   assert.equal(detail.questions[0].options[0].label, 'Compact view (Recommended)');
+  const replayed = JSON.parse(JSON.stringify({ type: 'user/message', data: notes[0] }));
+  assert.equal(replayed.data.id, notes[0].id);
+  assert.equal(replayed.data.role, 'user');
+  assert.equal(replayed.data.source.kind, 'dsh-auto-decide');
+  assert.ok(Array.isArray(replayed.data.content));
 });
 
 test('no UI provider still times out and chooses the only recommendation', async () => {
@@ -43,6 +51,10 @@ test('no UI provider still times out and chooses the only recommendation', async
     { config: config('recommended'), agent: agent(notes) });
   assert.deepEqual(value.answers[0].selected, ['Compact view (Recommended)']);
   assert.equal(notes.length, 1);
+  await autoAnswer({ questions: [{ ...question, id: 'q2' }] }, () => Promise.reject(nope),
+    { mode: 'recommended', timeoutSeconds: 1 }, { config: config('recommended'), agent: agent(notes) });
+  assert.equal(notes.length, 2);
+  assert.notEqual(notes[0].id, notes[1].id, 'each persisted injected message needs its own identity');
 });
 
 test('a logger failure cannot turn an injected auto answer back into an error', async () => {

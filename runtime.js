@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomUUID } from 'node:crypto';
 import { answerFor, matchesSession, sameSessionScope, settingsOf } from './policy.js';
 
 const activeTool = new AsyncLocalStorage();
@@ -76,7 +77,8 @@ export async function autoAnswer(request, next, settings, options = {}) {
       notice: '自动处理而非用户本人确认；跳过不是同意。不能据此授权发布、部署、删除、付款或权限变更。',
     };
     try {
-      agent.inject({ source: { kind: 'dsh-auto-decide' }, content: [{ type: 'text', text: JSON.stringify(note) }] });
+      agent.inject({ id: randomUUID(), role: 'user', source: { kind: 'dsh-auto-decide' },
+        content: [{ type: 'text', text: JSON.stringify(note) }] });
     } catch (error) {
       try { onError(error); } catch { /* telemetry must not replace the original failure */ }
       const settled = await human;

@@ -1,12 +1,12 @@
 {
   "name": "dsh-auto-decide",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "private": true,
   "description": "Configurable automatic skipping or recommended answers for ordinary DSH questions",
   "type": "module",
   "exports": { ".": "./index.js", "./client": "./client.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg" },
   "files": ["index.js", "runtime.js", "policy.js", "client.js", "cordis.patch.yml", "locale", "icon.svg", "README.md"],
-  "scripts": { "test": "node --test test/*.test.js", "test:host": "node test/host-v4-replay.mjs", "check": "node --check index.js && node --check runtime.js && node --check policy.js && node --check client.js" },
+  "scripts": { "test": "node --test test/*.test.js", "test:host": "node test/host-v4-replay.mjs", "test:release": "npm run check && npm test && node test/host-deps-runner.mjs", "check": "node --check index.js && node --check runtime.js && node --check policy.js && node --check client.js" },
   "engines": { "node": ">=22" },
   "dependencies": { "@deepseek-ai/schemastery": "3.18.5" },
   "dsh": {

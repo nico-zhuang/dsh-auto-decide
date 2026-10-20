@@ -26,7 +26,9 @@ test('browser bundle declares its slot and mounts a settings panel without a sec
   const client = moduleFactory.factory(name => { assert.equal(name, 'react'); return React; });
   assert.deepEqual(Array.from(client.inject), ['slots', 'configForms', 'sessions', 'workspaces', 'locale']);
   let configuredIds = ['session-one'];
-  const form = { getSnapshot: () => ({ status: 'ready', writable: true, value: { enabled: true, mode: 'skip', timeoutSeconds: 120,
+  let enabled = true;
+  let formStatus = 'ready';
+  const form = { getSnapshot: () => ({ status: formStatus, writable: true, value: { enabled, mode: 'skip', timeoutSeconds: 120,
     scopeMode: 'allowlist', sessionIds: configuredIds } }),
     subscribe() { return () => {}; }, set: async () => true };
   const sessions = { list: { getSnapshot: () => ({ phase: 'ready', ids: ['session-one', 'session-two'], byId: {
@@ -46,6 +48,19 @@ test('browser bundle declares its slot and mounts a settings panel without a sec
   client.apply(ctx);
   assert.equal(registration.key, 'dsh-auto-decide#dsh-auto-decide');
   assert.deepEqual(Object.keys(dictionary.zh).sort(), Object.keys(dictionary.en).sort());
+  const summary = () => { stateIndex = 0; return panel({ view: 'summary' }).children.join(''); };
+  assert.equal(summary(), '普通提问 · 已开启 · 仅选中会话 · 120 秒 · 跳过');
+  formStatus = 'loading';
+  assert.equal(summary(), '普通提问 · 配置状态: loading');
+  formStatus = 'ready';
+  enabled = false;
+  assert.equal(summary(), '普通提问 · 已暂停');
+  enabled = true;
+  configuredIds = [];
+  assert.equal(summary(), '普通提问 · 已开启 · 仅选中会话 · 未覆盖任何会话');
+  configuredIds = ['session-one'];
+  state.length = 0;
+  stateIndex = 0;
   const element = panel({ view: 'page' });
   assert.ok(localeSubscriptions > 0);
   assert.equal(element.tag, 'section');
@@ -98,6 +113,13 @@ test('browser bundle declares its slot and mounts a settings panel without a sec
     form.set = async () => false;
     await saveList.props.onClick();
     activeLocale = 'en';
+    configuredIds = ['session-one'];
+    assert.equal(summary(), 'Ordinary questions · On · Selected only · 120 sec · Skip');
+    enabled = false;
+    assert.equal(summary(), 'Ordinary questions · Paused');
+    enabled = true;
+    configuredIds = [];
+    assert.equal(summary(), 'Ordinary questions · On · Selected only · No sessions covered');
     stateIndex = 0;
     const english = panel({ view: 'page' });
     assert.match(text(english), /Sessions/);

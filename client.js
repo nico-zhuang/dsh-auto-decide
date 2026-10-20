@@ -7,7 +7,7 @@ window.__ModuleLoader__.load({
     const messages = {
       zh: {
         section: '提问自动处理设置', ordinary: '普通提问', enable: '启用自动处理', on: '已开启', off: '已暂停',
-        scope: '适用会话', global: '所有会话', allowlist: '仅选中会话', blocklist: '排除选中会话',
+        scope: '适用会话', global: '所有会话', allowlist: '仅选中会话', blocklist: '排除选中会话', noSessions: '未覆盖任何会话',
         mode: '到时处理', skip: '跳过', recommended: '仅展示类推荐项', delay: '等待时间', seconds: '秒', save: '保存',
         selectSessions: '选择会话', chosen: '已选', emptyWhitelist: '空名单时不自动处理。新会话默认不在名单中。',
         emptyBlacklist: '空名单等于所有会话。新会话默认会自动处理。', search: '搜索会话',
@@ -22,7 +22,7 @@ window.__ModuleLoader__.load({
       },
       en: {
         section: 'Automatic question handling settings', ordinary: 'Ordinary questions', enable: 'Enable automatic handling', on: 'On', off: 'Paused',
-        scope: 'Sessions', global: 'All sessions', allowlist: 'Selected only', blocklist: 'Except selected',
+        scope: 'Sessions', global: 'All sessions', allowlist: 'Selected only', blocklist: 'Except selected', noSessions: 'No sessions covered',
         mode: 'After timeout', skip: 'Skip', recommended: 'Presentation choices only', delay: 'Wait', seconds: 'sec', save: 'Save',
         selectSessions: 'Choose sessions', chosen: 'Selected', emptyWhitelist: 'An empty list keeps every question manual. New sessions are not included.',
         emptyBlacklist: 'An empty list covers all sessions. New sessions are included automatically.', search: 'Find sessions',
@@ -109,7 +109,13 @@ window.__ModuleLoader__.load({
           const missingPages = Math.max(1, Math.ceil(missing.length / 120));
           const visibleMissingPage = Math.min(missingPage, missingPages - 1);
           const dirty = JSON.stringify(draftIds) !== savedKey;
-          if (view === 'summary') return h('span', null, `${t('ordinary')} · ${scopeLabel} · ${values.timeoutSeconds ?? 120} ${t('seconds')} · ${answerLabel}`);
+          if (view === 'summary') {
+            if (snapshot.status !== 'ready') return h('span', null, `${t('ordinary')} · ${t('configStatus')}: ${snapshot.status}`);
+            const prefix = `${t('ordinary')} · ${t(values.enabled === false ? 'off' : 'on')}`;
+            if (values.enabled === false) return h('span', null, prefix);
+            if (scopeMode === 'allowlist' && savedIds.length === 0) return h('span', null, `${prefix} · ${scopeLabel} · ${t('noSessions')}`);
+            return h('span', null, `${prefix} · ${scopeLabel} · ${values.timeoutSeconds ?? 120} ${t('seconds')} · ${answerLabel}`);
+          }
           return h('section', { style: style.root, 'aria-label': t('section') },
             h('div', { style: style.card },
               h('div', { style: style.spread },

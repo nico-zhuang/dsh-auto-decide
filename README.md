@@ -10,7 +10,7 @@ DSH 0.2.1-rc.2 的普通 `ask_user_question` 超时处理插件：默认启用�
 
 组件配置中先选工作范围，再展开「选择会话」，按标题或 ID 搜索、多选并单击「保存名单」。可显示已归档会话；名单只保存稳定会话 ID，不按可变标题匹配。已选但目录不再显示的会话可从名单中移除。模式或名单在一个问题等待期间变更时，旧计时器不会沿用先前规则自动作答；不在范围内的普通问题从一开始交由原本人工应答界面处理。全局模式仍保留已保存的名单，切回白/黑名单时恢复。
 
-设置页不重复插件管理器的标题和简介；关键选项集中在紧凑卡片里，较长的范围与安全说明默认收起。全部插件自绘文案订阅 DSH `locale` 服务，随「设置 → 常规」的中文／英文选择即时切换；颜色和圆角跟随 DSH 的明暗主题变量。选择推荐或跳过的规则与 0.2.0 相同。
+设置页不重复插件管理器的标题和简介；关键选项集中在紧凑卡片里，较长的范围与安全说明默认收起。全部插件自绘文案订阅 DSH `locale` 服务，随「设置 → 常规」的中文／英文选择即时切换；颜色和圆角跟随 DSH 的明暗主题变量。v0.2.3 在设置摘要明确显示已开启／已暂停，白名单为空时注明未覆盖任何会话；选择推荐或跳过的规则未变。
 
 ## 历史加载风险与 v0.2.2 修复
 
@@ -29,22 +29,15 @@ DSH 0.2.1-rc.2 的普通 `ask_user_question` 超时处理插件：默认启用�
 
 ## 安装、测试与回滚
 
-通过 DSH 侧栏「插件 → 添加插件」安装已发布 GitHub 标签 `github:nico-zhuang/dsh-auto-decide#v0.2.2`；按安装器提示启用。升级旧版时走插件管理器的卸载／安装流程，不直接改 profile 文件。若提示重启，须重启当前桌面宿主，单纯刷新浏览器不够。安装后从组件配置页调整开关、范围、名单、模式和秒数，再用普通无风险问题确认推荐、回退跳过和来源说明。测试不可用真实发布、删除或支付操作。
+通过 DSH 侧栏「插件 → 添加插件」安装已发布 GitHub 标签 `github:nico-zhuang/dsh-auto-decide#v0.2.3`；按安装器提示启用。已有旧版时，桌面内置 `dsh plugin --profile desktop add 'github:nico-zhuang/dsh-auto-decide#v0.2.3'` 可原位更新并固定标签、保留设置，不手工修改 profile 文件。若提示重启，须重启当前桌面宿主，单纯刷新浏览器不够。安装后从组件配置页核对开关、范围、名单、模式和秒数，再用普通无风险问题确认推荐、回退跳过和来源说明。测试不可用真实发布、删除或支付操作。
 
-本地开发运行：
-
-```bash
-npm install --ignore-scripts
-npm test
-npm run check
-```
-
-重演 DSH 0.2.1-rc.2 的真实 v4 Zstd 会话写入、关闭与冷重载（只在系统临时目录生成合成数据，不接触现有会话）：
+本地使用 Node 24 测试发布门禁：
 
 ```bash
-AUDIT=$(mktemp -d "${TMPDIR:-/tmp}/dsh-v4.XXXXXX")
-npm install --prefix "$AUDIT/deps" --no-save --no-package-lock --ignore-scripts --no-audit --no-fund '@deepseek-ai/cordis@~4.0.5' '@deepseek-ai/dsh-session@0.2.1-rc.2' '@deepseek-ai/dsh-session-persistence-jsonl@0.2.1-rc.2'
-DSH_HOST_DEPS="$AUDIT/deps/node_modules" npm run test:host
+npm install --ignore-scripts --no-audit --no-fund --no-package-lock
+npm run test:release
 ```
+
+`test:release` 依次运行语法检查、单元测试以及 DSH 0.2.1-rc.2 的真实 v4 Zstd 会话写入、关闭与冷重载，分别校验插件实际生成的跳过和推荐消息。测试脚本会将精确版本的 Host 依赖安装在系统临时目录，完成后清理；无需设置 `DSH_HOST_DEPS`，不访问真实用户会话或安装 profile。任一检查失败时命令非零退出；**发布者必须在打标签和发布前运行 `npm run test:release` 并确认成功**。当前仓库尚未启用 GitHub 自动 CI，不能把本地发版检查误称为远端强制门禁。仅做快速开发检查可分别运行 `npm test` 和 `npm run check`。
 
 回滚请使用 DSH 插件管理器先停用或卸载 `dsh-auto-decide`，不手工修改 profile 清单、Cordis patch 或应用包。
